@@ -44,28 +44,60 @@ memory helps at all — and, once it clearly did, added mem0 as a third arm.
 See `CLAUDE.md` for full methodology, raw numbers, and caveats — this is the
 summary.
 
+### Score breakdown (only cells that have actually been run)
+
+| Domain | Agent model | Arm | Paper passrate | Avg progress score |
+|---|---|---|---|---|
+| Travel (50 groups) | gpt-4o-mini | memclaw | SR 0.00% | SPS 14.87% (PS 0.29%) |
+| Travel (50 groups) | gpt-4o-mini | none | SR 0.00% | SPS 13.81% (PS 0.29%) |
+| Math (40p/354s) | gpt-4.1 | memclaw | **0.250** (10/40) | **23.95%** |
+| Math (40p/354s) | gpt-4.1 | mem0 | 0.100 (4/40) | 19.15% |
+| Math (40p/354s) | gpt-4.1 | none | 0.100 (4/40) | 19.03% |
+| Physics (20p/86s) | gpt-4.1 | memclaw | **0.350** (7/20) | **52.75%** |
+| Physics (20p/86s) | gpt-4.1 | mem0 | 0.100 (2/20) | 36.26% |
+| Physics (20p/86s) | gpt-4.1 | none | 0.050 (1/20) | 32.29% |
+| Physics (20p/86s) | gemini-3.6-flash | memclaw | **0.550** (11/20) | **55.90%** |
+| Physics (20p/86s) | gemini-3.6-flash | mem0 | 0.350 (7/20) | 41.01% |
+| Physics (20p/86s) | gemini-3.6-flash | none | 0.250 (5/20) | 31.76% |
+| Math (40p/354s) | gemini-3.6-flash | memclaw | **0.350** (14/40) | **35.16%** |
+| Math (40p/354s) | gemini-3.6-flash | mem0 | 0.225 (9/40) | 31.13% |
+| Math (40p/354s) | gemini-3.6-flash | none | 0.225 (9/40) | 27.39% |
+
+With the physics mem0/gemini-3.6-flash arm now complete (2026-08-20), **both
+formal-reasoning domains have all three arms run at both agent-model
+families** — nothing left to run at these two tiers. Travel is closed as a
+true null (see caveat below); shopping and further model tiers (Opus 5,
+gpt-5.6-sol) are scoped but not run, so they're left out of this table
+entirely rather than listed with a blank score.
+
+### Significance (paired bootstrap CI + permutation, or McNemar)
+
 | Domain | Agent model | memclaw vs none | memclaw vs mem0 | mem0 vs none |
 |---|---|---|---|---|
 | Travel (50 groups) | gpt-4o-mini | **No effect** (95% CI spans zero, p=0.45) | — | — |
 | Math (40 papers / 354 subtasks) | gpt-4.1 | **memclaw wins** — progress score +4.9pp (p=0.024), pass rate 10/40 vs 4/40 (p=0.031) | +4.8pp (p=0.014) | +0.1pp, n.s. (p=0.94) |
 | Physics (20 papers / 86 subtasks) | gpt-4.1 | **memclaw wins, larger effect** — progress score +20.5pp (p=0.0036), pass rate 7/20 vs 1/20 (p=0.031), memclaw won every paper it didn't tie (9-0-11) | +16.5pp (p=0.0067) | +4.0pp, n.s. (p=0.45) |
-| Physics (20 papers / 86 subtasks) | gemini-3.6-flash | **memclaw wins, replicates & strengthens gpt-4.1** — progress score +24.1pp (p=0.0013), subtask McNemar p=4.2e-07 | not run (mem0 quota, since resolved) | not run |
-| Math (40 papers / 354 subtasks) | gemini-3.6-flash | **memclaw wins, replicates gpt-4.1** — progress score +7.8pp (p=0.0006), subtask McNemar p=0.0007 (paper-passrate McNemar n.s. at 0.125 — known floor effect, not evidence against) | subtask McNemar p=0.040 (progress-score gap n.s.) | +3.7pp, trending but n.s. (p=0.076) — **not** a repeat of gpt-4.1's clean null, see caveat below |
-| Shopping | — | deferred — needs a multi-GB product DB + separate service, not yet started | — | — |
+| Physics (20 papers / 86 subtasks) | gemini-3.6-flash | **memclaw wins, replicates & strengthens gpt-4.1** — progress score +24.1pp (p=0.0018), subtask McNemar p=4.2e-07 | +14.9pp (p=0.0346), subtask McNemar p=0.0005 | +9.3pp, trending but n.s. (p=0.170) |
+| Math (40 papers / 354 subtasks) | gemini-3.6-flash | **memclaw wins, replicates gpt-4.1** — progress score +7.8pp (p=0.0006), subtask McNemar p=0.0007 (paper-passrate McNemar n.s. at 0.125 — known floor effect, not evidence against) | subtask McNemar p=0.040 (progress-score gap n.s.) | +3.7pp, trending but n.s. (p=0.076) |
 
 **Takeaway:** memory only showed an effect once the agent model had headroom
 to use it — gpt-4o-mini couldn't do the travel task well enough for memory to
 matter regardless of condition. At gpt-4.1, memclaw beat both no-memory and
 mem0 on both formal-reasoning domains, and **mem0 was statistically
-indistinguishable from no memory at all** in both. The effect held and grew
-at a second agent model family (`gemini-3.6-flash`), on **both** domains now
-— math replicated as of 2026-08-19, after the corruption/funding blocker
-below was cleared. **mem0's picture at the gemini tier is less clean than at
-gpt-4.1**: on math it trends above no-memory (p=0.076, not significant) where
-gpt-4.1 was a flat null (p=0.94) — one data point, not yet a second
-replication either way; the still-unrun physics mem0/gemini arm is what
-would settle it. Not yet tested: whether any of this holds outside
-formal-reasoning-style tasks, or at gpt-4.1 on the travel domain specifically.
+indistinguishable from no memory at all** in both (p=0.94, p=0.45). The
+memclaw-vs-none effect held and grew at a second agent model family
+(`gemini-3.6-flash`), on **both** domains now — math replicated 2026-08-19,
+physics's mem0 arm completed 2026-08-20 clearing the last gap in the table.
+**mem0's picture at the gemini tier is consistently less clean than at
+gpt-4.1, in both domains**: it trends above no-memory on math (+3.7pp,
+p=0.076) and physics (+9.3pp, p=0.170) — neither individually significant,
+but the same direction twice is worth flagging as a possible tier-dependent
+shift, not dismissing as noise, and not overclaiming as "mem0 caught up"
+either. memclaw still separates clearly from mem0 in physics at this tier
+(p=0.0346 progress score, p=0.0005 subtask); math's memclaw-vs-mem0 gap is
+weaker (subtask p=0.040, progress score n.s.). Not yet tested: whether any of
+this holds outside formal-reasoning-style tasks, or at gpt-4.1 on the travel
+domain specifically.
 
 **Known limitation — read before quoting absolute scores.** Every
 formal-reasoning result above was produced by a single-shot reasoner, not the
