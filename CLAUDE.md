@@ -6,6 +6,17 @@ This file tracks *which benchmarks are done, in progress, or queued* across
 both this repo and the sibling `continual-learning-bench` repo, so state
 survives across sessions.
 
+**Rebrand note (2026-08-20):** MemClaw is now **Caura** — product repo moved
+to `caura-ai/caura`, site is `https://caura.ai`. Per Caura's own repo, the
+`memclaw_*` tool names, env vars (`MEMCLAW_API_KEY`, etc.), and URLs keep
+working for backward compatibility, so nothing in this repo's harness code
+needed a functional change. Below, "MemClaw"/"memclaw" is left as-is in
+already-written historical entries (that was the correct name when written,
+and it matches the still-functional identifiers in code/config); new entries
+should say Caura. Only the direct product-repo pointer (the old
+`caura-ai/caura-memclaw` name → now `caura-ai/caura`) has been corrected
+throughout, since that one was just wrong going forward, not a historical fact.
+
 ## Benchmark status
 
 | Benchmark | Status | Where | Notes |
@@ -13,11 +24,11 @@ survives across sessions.
 | CL-Bench | ✅ run (quick_test) | `continual-learning-bench` repo (sibling dir) | MemClaw integrated as a `system` (`src/systems/memclaw/`) on branch `add-memclaw-system`, following the same retrieve-then-respond/store-after-observe pattern as the `mem0` baseline system. A quick_test run happened, but on a different machine/worktree — **not visible from this checkout**: as of 2026-07-31 this clone has no memclaw config under `configs/`, and nothing in `results/`/`final_results/` is dated after the integration commit (2026-07-29). Results/logs need to be pulled over from wherever that run actually happened before they can be cited here. |
 | STATE-Bench | ⏸️ on hold | `STATE-Bench` repo (sibling dir), cloned | MemClaw agent adapter (`agents/memclaw_agent.py`) exists but blocked: the eval protocol (`state_bench/configs/eval_protocols/gpt54.json`) locks the user-simulator + judge to GPT-5.4 via Azure OpenAI only (no OpenAI/OpenRouter path — `client.py`'s `_build_openai_client` explicitly rejects any custom `base_url`, and the eval client has no non-Azure code path at all). We only have an OpenRouter key, which can cover the agent side (via a custom `BaseLLMClient`/`BaseAgent` subclass under `clients/`/`agents/`) but not the locked judge/simulator. Need an Azure OpenAI resource with a GPT-5.4 deployment before resuming. If unblocked, only the **Agent Learning Track** (train-trajectory learning transfer, `docs/AGENT_LEARNING_TRACK.md`) is worth running — the main track doesn't exercise memory. |
 | MemoryArena-Rotation (travel) | ✅ **settled — negative result, do not re-run** | `MemoryArena` repo (sibling dir), cloned | See "MemoryArena travel: settled" section below. memclaw vs no-memory are statistically indistinguishable at n=50 groups, and the benchmark is too small to ever resolve the observed effect. Travel is closed unless the agent model changes. |
-| MemoryArena-Rotation (math) | ✅ **significant win at gpt-4.1** (memclaw vs none); mem0 arm ✅ **run 2026-08-04 on a second machine — mem0 ≈ none, memclaw beats both** | `MemoryArena` repo, `run_math.py` + `configs/formal_reasoning_configs/math_memclaw_gpt41.json` / `math_none_gpt41.json` / `math_mem0_gpt41.json` | Self-contained (HF dataset `ZexueHe/memoryarena`, config `formal_reasoning_math`): **40 papers / 354 subtasks**. gpt-4o-mini run (2026-08-02) was directional but underpowered; gpt-4.1 rerun (2026-08-04) cleared significance on all three metrics — see "MemoryArena math: gpt-4.1 rerun" below. mem0 arm completed same day on a second (higher-RAM) machine after the primary machine OOM'd — see "MemoryArena math: mem0 arm result" below. ~18s/subtask → ~106 min sequential, ~27 min at 4 shards. See "MemoryArena math: setup gotchas" below — several traps cost real time. Math has **no token/cost tracking at all** (`formal_reasoning_env/llm_backend.py`'s `OpenAIBackend.chat` returns only text, never reads `response.usage`), so the travel zero-usage fix doesn't apply and spend must come from OpenRouter's key API. It also runs an **LLM judge** through OpenRouter (`env_config.model_name`), billing roughly double per subtask. Resumable per-paper via `_is_paper_processed`. Note: `results/json/math_gpt5mini/` holds an **abandoned partial run** (2 papers, memclaw only, no logs) from a `math_memclaw_gpt5mini.json`/`math_none_gpt5mini.json` config pair found already in the repo but never mentioned in this file before 2026-08-04 — origin unknown, not part of any tracked result, safe to ignore or resume separately. |
+| MemoryArena-Rotation (math) | ✅ **significant win at gpt-4.1** (memclaw vs none); mem0 arm ✅ **run 2026-08-04 on a second machine — mem0 ≈ none, memclaw beats both**; ✅ **gemini-3.6-flash tier complete 2026-08-19** (memclaw vs none significant, +7.76pp progress score, subtask McNemar p=0.0007 — replicates phys at this tier; mem0 comparison softer than gpt-4.1's, not a clean "mem0≈none" repeat — see "MemoryArena math: gemini-3.6-flash — complete" below) | `MemoryArena` repo, `run_math.py` + `configs/formal_reasoning_configs/math_memclaw_gpt41.json` / `math_none_gpt41.json` / `math_mem0_gpt41.json` (+ `*_gemini36.json` variants) | Self-contained (HF dataset `ZexueHe/memoryarena`, config `formal_reasoning_math`): **40 papers / 354 subtasks**. gpt-4o-mini run (2026-08-02) was directional but underpowered; gpt-4.1 rerun (2026-08-04) cleared significance on all three metrics — see "MemoryArena math: gpt-4.1 rerun" below. mem0 arm completed same day on a second (higher-RAM) machine after the primary machine OOM'd — see "MemoryArena math: mem0 arm result" below. ~18s/subtask → ~106 min sequential, ~27 min at 4 shards. See "MemoryArena math: setup gotchas" below — several traps cost real time. Math has **no token/cost tracking at all** (`formal_reasoning_env/llm_backend.py`'s `OpenAIBackend.chat` returns only text, never reads `response.usage`), so the travel zero-usage fix doesn't apply and spend must come from OpenRouter's key API. It also runs an **LLM judge** through OpenRouter (`env_config.model_name`), billing roughly double per subtask. Resumable per-paper via `_is_paper_processed`. Note: `results/json/math_gpt5mini/` holds an **abandoned partial run** (2 papers, memclaw only, no logs) from a `math_memclaw_gpt5mini.json`/`math_none_gpt5mini.json` config pair found already in the repo but never mentioned in this file before 2026-08-04 — origin unknown, not part of any tracked result, safe to ignore or resume separately. |
 | MemoryArena-Rotation (phys) | ✅ **significant win at gpt-4.1 — stronger than math** (memclaw vs none); mem0 arm ✅ **run 2026-08-05 — mem0 ≈ none, memclaw beats both**; ✅ **replicated at `google/gemini-3.6-flash` 2026-08-12 with a larger effect** (+24.14pp, subtask McNemar p=4.2e-07) — gemini mem0 arm deferred on quota | `MemoryArena` repo, `run_math.py` + `configs/formal_reasoning_configs/phys_memclaw_gpt41.json` / `phys_none_gpt41.json` / `phys_mem0_gpt41.json` | Second formal-reasoning domain, run as a replication of the math gpt-4.1 result. **20 papers / 86 subtasks**, same infra as math (shares `MathEnvironment`/env server/judge). See "MemoryArena phys: gpt-4.1 replication" below — effect is larger and cleaner than math despite half the sample (progress score +20.46pp vs +4.92pp, subtask McNemar p=0.0003 vs p=0.031). memclaw won every paper it didn't tie (9-0-11), none never won one. mem0 arm ran 2026-08-05 at `-Shards 1` on this machine and replicates math's mem0 finding — see "MemoryArena phys: mem0 arm result" below. **All three arms of both formal-reasoning domains are now complete.** |
 | MemoryArena-Rotation (shopping) | ⛔ blocked on a large data download | `MemoryArena` repo, `run_shopping.py` + `configs/web_shopping_configs/memclaw.json` | Not runnable as-is: `data/shopping/` does not exist in this checkout and the config points at it (`upstream_webshop_data_root`). Needs the product DB from <https://huggingface.co/datasets/ai-hyz/MemoryArena-product-db> (`items_shuffle.json`, `items_ins_v2.json`, `domain_data.json`, a pyserini `search_engine/indexes-full/` index, `product_catalog/`), **plus** a JDK on `PATH` for the search engine and `pip install -r env/env_systems/web_shopping_env/requirements-shopping.txt` + `python -m spacy download en_core_web_lg`. It also boots a separate upstream WebShop service on port 36004. Do this setup deliberately — it is much heavier than travel/math. |
 | GroupMemBench | ⏳ queued | not started | Multi-agent/fleet memory, given "Group" in the name — check if it already tests cross-agent memory sharing. (The old `suites/multi_agent_transfer` Track B suite this would have overlapped with was removed 2026-08-04 — see "Cross-repo context" below.) |
-| LoCoMo | ⏳ queued — **priority 1** | `suites/recall_accuracy_locomo` (scaffolded, not populated) | Dataset needs populating — see `datasets/locomo/README.md`. **Product repo already publishes 77.6% LLM-judge accuracy / 96.6% token savings (run 2026-04-19, `caura-ai/caura-memclaw` → `BENCHMARKS.md`) but with no baseline arm, no n, no judge model, no stats** — so the uncontrolled number exists and the *comparative* run still doesn't. See "Next action" item 1. |
+| LoCoMo | ⏳ queued — **priority 1** | `suites/recall_accuracy_locomo` (scaffolded, not populated) | Dataset needs populating — see `datasets/locomo/README.md`. **Product repo already publishes 77.6% LLM-judge accuracy / 96.6% token savings (run 2026-04-19, `caura-ai/caura` → `BENCHMARKS.md`) but with no baseline arm, no n, no judge model, no stats** — so the uncontrolled number exists and the *comparative* run still doesn't. See "Next action" item 1. |
 | LongMemEval | ⏳ queued — **priority 1** | `suites/recall_accuracy_longmemeval` (scaffolded, not populated) | Dataset needs populating — see `datasets/longmemeval/README.md`. Same as LoCoMo: product repo publishes 72.5% accuracy / 98.2% token savings (2026-04-19), unbaselined. |
 
 ## MemoryArena travel: settled (2026-08-02) — negative result
@@ -435,13 +446,85 @@ the paper count, not the exit code**). Resolve by upgrading the mem0 plan or
 waiting for the 2026-09-01 reset, then re-run `phys_mem0_gemini36.json` /
 `math_mem0_gemini36.json` — both configs already exist and are verified.
 
-## MemoryArena math: gemini-3.6-flash — ⛔ STILL NOT SCOREABLE, now for a second reason (updated 2026-08-18)
+## MemoryArena math: gemini-3.6-flash — ✅ complete (resumed + finished 2026-08-19)
+
+**Update 2026-08-19: the resume completed cleanly and the result is in.**
+After the account was topped up (see budget note below — landed in two
+tranches, ending at **$60.83** account balance / $108.88 key-limit headroom
+post-run), `bash run_gemini36_math.sh` was rerun and finished all three arms
+at 40/40 papers each, `rc=0`. `scripts/check_result_contamination.py` confirms
+all three live arms (`memclaw`, `none`, `mem0`) are **0/354 empty responses**
+— the two contamination backup folders from 2026-08-18 (below) still flag as
+contaminated, which is expected: they're quarantined evidence, not part of
+the scored set.
+
+| arm | paper passrate | avg progress score |
+|---|---|---|
+| memclaw | **0.350** (14/40) | **35.16%** |
+| mem0    | **0.225** (9/40)  | **31.13%** |
+| none    | **0.225** (9/40)  | **27.39%** |
+
+**memclaw vs no-memory — significant, replicates gpt-4.1 math and both phys
+tiers at this second model family:**
+
+| metric | memclaw | none | test | p |
+|---|---|---|---|---|
+| progress score (paired, 40 papers) | 35.16% | 27.39% | +7.76pp, 95% CI **[3.92, 11.65]** | perm test (20k) **0.0006** |
+| subtask correctness (354 subtasks) | 41 own-only | 15 own-only | McNemar exact | **0.0007** |
+| paper passrate (40 papers) | 14/40 | 9/40 | McNemar exact (6 vs 1 discordant) | 0.125 (not significant — floor effect, same pattern as phys) |
+
+Per-paper wins: memclaw 19, none 5, tied 16.
+
+**mem0 vs no-memory — a different shape than gpt-4.1, worth flagging
+honestly.** At gpt-4.1 (both domains), mem0 was flatly indistinguishable from
+no-memory (p=0.94, p=0.45). Here it's closer to separating, though still not
+significant: progress score +3.74pp, 95% CI **[-0.19, 7.70]** (just touches
+zero), perm p=**0.076**. Per-paper wins mem0 17 / none 10 / tied 13 — less of
+a coin flip than gpt-4.1's 8/8 splits. **Do not report this as "mem0≈none,
+replicated a third time"** — the gpt-4.1 finding was clean; this one is
+suggestive but not there. Small sample (n=40) and a single run — needs another
+data point (e.g. the still-unrun phys mem0 gemini arm, see Next action) before
+treating the difference between "mem0≈none at gpt-4.1" and "mem0 trending
+above none at gemini" as a real tier-dependent effect rather than noise.
+
+**memclaw vs mem0 — mixed, subtask-significant but not paper-level:**
+
+| metric | memclaw | mem0 | test | p |
+|---|---|---|---|---|
+| progress score (paired, 40 papers) | 35.16% | 31.13% | -4.02pp reads as memclaw −(−4.02) = +4.02pp, 95% CI [-9.07, 1.03] | perm p=0.129 (not significant) |
+| subtask correctness (354 subtasks) | 39 own-only | 22 own-only | McNemar exact | **0.040** |
+| paper passrate (40 papers) | 14/40 | 9/40 | McNemar exact (5 vs 0 discordant) | 0.0625 — at its floor, same known resolution limit noted for phys gpt-4.1 |
+
+**Bottom line: math now matches phys at the gemini-3.6-flash tier for the
+memclaw-vs-none comparison — the effect holds across two domains and two
+model families.** The mem0 comparison needs the phys gemini mem0 run (still
+pending, see Next action) before drawing a firm tier-dependent conclusion.
+
+**Run-script robustness fixes made while resuming (2026-08-19, `MemoryArena`,
+uncommitted):** `run_gemini36_math.sh` failed twice when run directly from a
+plain PowerShell prompt (not via this session's tooling) — (1) `.env` had
+picked up CRLF line endings from a Windows editor, which broke `. ./.env`
+sourcing (`$'\r': command not found`); fixed by stripping `\r` in place.
+(2) `python` wasn't resolvable on PATH in that shell even after `$env:PATH`
+edits — root cause was `bash` itself resolving to something other than Git
+Bash (`where bash` found nothing, `-f`/`-x` tests on the known Python313 path
+also failed under whatever that shell was — plausibly WSL's bash, where
+`/c/...` paths don't exist). Fixed two ways: the script now resolves
+`$PYTHON` itself (`command -v python`, falling back to the known Python313
+absolute path) instead of assuming plain `python` works, and the reliable
+invocation is to call Git Bash **by its full path** explicitly:
+`& "C:\Program Files\Git\bin\bash.exe" run_gemini36_math.sh` — this is what
+actually got the resume running.
+
+---
+
+Below is kept as historical record of how this got blocked, discovered
+contaminated, and resumed — the section header used to read "⛔ STILL NOT
+SCOREABLE"; that is resolved as of 2026-08-19 above.
 
 Started 2026-08-12 right after the phys run above, same setup
 (`math_memclaw_gemini36.json` / `math_none_gemini36.json`, output
 `./results/json/math_gemini36`, `run_gemini36_math.sh` at `-Shards 1`).
-**Still no scoreable result at this tier — do not score or cite
-`results/json/math_gemini36` until this whole section says otherwise.**
 
 **Blocker #1 (2026-08-12, resolved):** the OpenRouter *key's spending limit*
 hit its $50 cap mid-run (`403 Key limit exceeded (total limit)`,
@@ -481,7 +564,8 @@ papers — those were pulled too. Contaminated papers were moved, not deleted,
 to `results/json/math_gemini36/_contaminated_402_backup_20260818/` (kept as
 evidence, excluded from scoring).
 
-**Verified-clean state on disk right now:**
+**Verified-clean state on disk as of 2026-08-18** (superseded — see the
+completion note at the top of this section for the 2026-08-19 finish):
 
 | arm | clean papers | still needed |
 |---|---|---|
@@ -489,10 +573,9 @@ evidence, excluded from scoring).
 | none | 4/40 | 36 |
 | mem0 | 40/40 | 0 — fully done, clean |
 
-**Blocked on a real OpenRouter account top-up** (not a key-limit change —
-already confirmed sufficient) before resuming. Once funded, `bash
-run_gemini36_math.sh` (or manually re-running `none`/`memclaw` configs) will
-skip the clean papers and redo the remaining 55.
+Was blocked on a real OpenRouter account top-up (not a key-limit change —
+already confirmed sufficient). Resolved 2026-08-19: account funded, resume
+run completed all remaining papers in both arms cleanly.
 
 ### Safeguards added 2026-08-18 so this class of bug can't recur silently
 
@@ -629,24 +712,42 @@ as the lower-model-tier comparison point.
 
 **A second agent-model tier was added 2026-08-12** (`google/gemini-3.6-flash`)
 to test whether the effect is gpt-4.1-specific. It is not: phys replicated
-with a *larger* effect (+24.14pp, subtask McNemar p=4.2e-07) — see the phys
-gemini-3.6-flash section above. Math at the same tier was running as of
-2026-08-12; record it when it lands.
+with a *larger* effect (+24.14pp, subtask McNemar p=4.2e-07), and **math now
+replicates too as of 2026-08-19** (+7.76pp, subtask McNemar p=0.0007) after
+resuming from the 2026-08-18 contamination — see "MemoryArena math:
+gemini-3.6-flash — complete" above. **Both domains are now closed at the
+gemini-3.6-flash tier for the memclaw-vs-none comparison.**
 
-**mem0 at gemini tier is deferred, not failed** — the mem0 account's SEARCH
-quota is exhausted (1000/1000, resets **2026-09-01**), so both gemini mem0
-arms 500 on every paper. Configs `phys_mem0_gemini36.json` /
-`math_mem0_gemini36.json` already exist and are verified; re-run them after
-the quota resets (or after a plan upgrade) if a three-way comparison at this
-tier is wanted. Decision on 2026-08-12 was to ship memclaw-vs-none without it,
-since mem0 ≈ none was already established at gpt-4.1 in both domains.
+**mem0 at gemini tier is now mixed, not uniformly deferred.** The math mem0
+arm at this tier is done (2026-08-19, part of the same run) — but the result
+is *not* a clean "mem0≈none" repeat like gpt-4.1: it's directionally above
+none (+3.74pp progress score) at p=0.076, not quite significant. **The
+mem0 SEARCH-quota key issue that blocked this is also resolved** — the
+account was moved to a key/plan with working search (verified live
+2026-08-19, both `add` and `wrap_user_prompt`/search round-tripped
+successfully through the memory server) — so this is no longer a quota
+problem. **`phys_mem0_gemini36.json` is still unrun** and is now the natural
+next step: it would both complete the phys 3-way comparison at this tier and
+give a second data point on whether "mem0 trending above none" at gemini is
+real or a math-specific blip. Config already exists and is verified.
 
 Two further agent models were scoped but **not run** on cost grounds
 (2026-08-12): `anthropic/claude-opus-5` and `openai/gpt-5.6-sol`, both verified
 available through OpenRouter with the harness's exact call shape. Estimated
-~$125-145 each for a full 2-domain × 3-arm sweep versus ~$38 for gemini, which
-is why gemini went first. Nothing is left to run on MemoryArena except
-shopping (item 2) and those two tiers. Next, in priority order:
+~$125-145 each for a full 2-domain × 3-arm sweep (~$250-290 combined),
+versus ~$38 for gemini, which is why gemini went first. The account has been
+topped up partway (**$60.83** balance / $108.88 key-limit headroom as of
+2026-08-19) — enough for the phys mem0 gemini run above, not enough for
+either Opus 5 or gpt-5.6-sol yet. The team reported (external update, not
+yet reconciled into this file) that Opus 5 math had reached 28/40 papers on
+a separate machine/environment not visible from this checkout — same
+"ran elsewhere" gap as CL-Bench (item 4 below); needs pulling in before
+citing. Next, in priority order:
+
+**Immediate/cheap, do before anything else below:** run `phys_mem0_gemini36.json`
+(~$5-10, budget already covers it) — completes the phys 3-way comparison at
+the gemini tier, and resolves whether math's "mem0 trending above none"
+reading is real or noise.
 
 1. **LoCoMo / LongMemEval** — now the biggest remaining gap, and the only
    priority-1 item. These are the recall-accuracy benchmarks this repo is
@@ -656,7 +757,7 @@ shopping (item 2) and those two tiers. Next, in priority order:
    external MemoryArena-Rotation work.
 
    **The MemClaw product repo already publishes its own numbers for both**
-   (`caura-ai/caura-memclaw`, `BENCHMARKS.md`, last run **2026-04-19**):
+   (`caura-ai/caura`, `BENCHMARKS.md`, last run **2026-04-19**):
    LoCoMo **77.6%** / LongMemEval **72.5%** LLM-judge accuracy, plus token
    savings vs full context of **96.6%** / **98.2%**, and search latency
    23ms p50 / 27ms p95 warm. Checked 2026-08-10 — **this does not retire this
