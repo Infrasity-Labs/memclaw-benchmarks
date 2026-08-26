@@ -14,9 +14,10 @@ beats mem0 where both were run. Numbers below, negative results included.
 > In raw result files and configs the Caura arm is still literally named
 > `memclaw`.
 
-<p align="center">
-  <img src="assets/scoreboard.svg" alt="Caura solves 40%, 44% and 21% more subtasks than no memory at gpt-4.1, gemini-3.6-flash and gpt-5.6-sol. At gemini-3.6-flash, of 440 subtasks Caura solved 166, mem0 131, no memory 115." width="100%">
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/fig-headline-dark.svg">
+  <img alt="Caura solves 40 percent more subtasks than no memory at gpt-4.1 (115 vs 82 of 440), 44 percent more at gemini-3.6-flash (166 vs 115), and 21 percent more at gpt-5.6-sol (182 vs 150)." src="assets/fig-headline-light.svg" width="100%">
+</picture>
 
 ## Results
 
@@ -79,39 +80,25 @@ and mem0 does not separate from no-memory at conventional significance.
 
 ### Per-model results
 
-```mermaid
-xychart-beta
-    title "Subtasks solved out of 440 (both domains pooled)"
-    x-axis ["Caura gpt-4.1", "None gpt-4.1", "Caura gemini", "mem0 gemini", "None gemini", "Caura gpt-5.6-sol", "None gpt-5.6-sol"]
-    y-axis "Subtasks solved" 0 --> 200
-    bar [115, 82, 166, 131, 115, 182, 150]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/fig-pooled-dark.svg">
+  <img alt="Subtasks solved out of 440, pooled across both domains. gpt-4.1: Caura 115, no memory 82. gemini-3.6-flash: Caura 166, mem0 131, no memory 115. gpt-5.6-sol: Caura 182, no memory 150." src="assets/fig-pooled-light.svg" width="100%">
+</picture>
 
-| Agent model | Caura | mem0 | No memory | Caura advantage | Verdict |
-|---|--:|--:|--:|--:|---|
-| `gpt-4.1` | **115** | not run | 82 | +33 | :white_check_mark: significant |
-| `gemini-3.6-flash` | **166** | 131 | 115 | +51 | :white_check_mark: significant |
-| `gpt-5.6-sol` | **182** | not run | 150 | +32 | :white_check_mark: significant |
-| `claude-opus-5` | pending | not run | pending | pending | :hourglass: not yet funded |
-
-A caveat that matters when reading **down** that Caura column: `gpt-5.6-sol`
-was scored by a different judge model (see Caveats), so its 182 is not on
-exactly the same scale as the other two. Compare **across** a row freely, since
-both arms in a row share everything except memory. Compare down a column only
-with that caveat attached.
+Compare **across** a group freely: both arms in a group share everything except
+memory. Comparing **between** groups needs one caveat, since `gpt-5.6-sol` was
+scored by a different judge model (see Caveats), so its 182 is not on exactly
+the same scale as the other tiers.
 
 ### Effect size across models
 
 The view that stays valid between tiers, because each bar is a within-tier
 paired gap so judge and temperature differences cancel out.
 
-```mermaid
-xychart-beta
-    title "Caura advantage over no-memory (percentage points, pooled)"
-    x-axis ["gpt-4.1", "gemini-3.6-flash", "gpt-5.6-sol"]
-    y-axis "Advantage (pp)" 0 --> 14
-    bar [7.50, 11.59, 7.27]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/fig-effect-dark.svg">
+  <img alt="Caura advantage over no memory in percentage points: gpt-4.1 plus 7.50, gemini-3.6-flash plus 11.59, gpt-5.6-sol plus 7.27." src="assets/fig-effect-light.svg" width="100%">
+</picture>
 
 The advantage is largest at `gemini-3.6-flash`. It does **not** simply grow
 with model strength: at `gpt-5.6-sol` the no-memory baseline itself gets much
