@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="440" viewBox="0 0 900 440" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="440" fill="#0a0a0c"/>
+
+  <!-- ============ card 1: headline numbers ============ -->
+  <rect x="30" y="26" width="840" height="150" rx="18" fill="#17171b"/>
+
+  <text x="450" y="56" fill="#7d7d88" font-size="12" font-weight="600" letter-spacing="1.6" text-anchor="middle">MORE SUBTASKS SOLVED THAN NO MEMORY</text>
+
+  <!-- gpt-4.1 -->
+  <text x="190" y="122" fill="#8b7cf6" font-size="52" font-weight="700" text-anchor="middle">+40%</text>
+  <text x="190" y="150" fill="#9a9aa3" font-size="14" text-anchor="middle">gpt-4.1</text>
+
+  <line x1="320" y1="82" x2="320" y2="152" stroke="#2c2c34" stroke-width="1"/>
+
+  <!-- gemini-3.6-flash -->
+  <text x="450" y="122" fill="#8b7cf6" font-size="52" font-weight="700" text-anchor="middle">+44%</text>
+  <text x="450" y="150" fill="#9a9aa3" font-size="14" text-anchor="middle">gemini-3.6-flash</text>
+
+  <line x1="580" y1="82" x2="580" y2="152" stroke="#2c2c34" stroke-width="1"/>
+
+  <!-- gpt-5.6-sol -->
+  <text x="710" y="122" fill="#8b7cf6" font-size="52" font-weight="700" text-anchor="middle">+21%</text>
+  <text x="710" y="150" fill="#9a9aa3" font-size="14" text-anchor="middle">gpt-5.6-sol</text>
+
+  <!-- ============ card 2: bar comparison ============ -->
+  <rect x="30" y="196" width="840" height="218" rx="18" fill="#17171b"/>
+
+  <text x="450" y="228" fill="#7d7d88" font-size="12" font-weight="600" letter-spacing="1.6" text-anchor="middle">SUBTASKS SOLVED OUT OF 440 &#183; GEMINI-3.6-FLASH</text>
+
+  <!-- Caura -->
+  <text x="62" y="273" fill="#e8e8ea" font-size="15" font-weight="700">Caura</text>
+  <rect x="190" y="258" width="600" height="20" rx="10" fill="#26262e"/>
+  <rect x="190" y="258" width="226" height="20" rx="10" fill="#8b7cf6"/>
+  <text x="806" y="273" fill="#e8e8ea" font-size="15" font-weight="700">166</text>
+
+  <!-- mem0 -->
+  <text x="62" y="318" fill="#c8c8d0" font-size="15">mem0</text>
+  <rect x="190" y="303" width="600" height="20" rx="10" fill="#26262e"/>
+  <rect x="190" y="303" width="179" height="20" rx="10" fill="#e8b04b"/>
+  <text x="806" y="318" fill="#c8c8d0" font-size="15">131</text>
+
+  <!-- no memory -->
+  <text x="62" y="363" fill="#c8c8d0" font-size="15">No memory</text>
+  <rect x="190" y="348" width="600" height="20" rx="10" fill="#26262e"/>
+  <rect x="190" y="348" width="157" height="20" rx="10" fill="#5a5a66"/>
+  <text x="806" y="363" fill="#c8c8d0" font-size="15">115</text>
+
+  <text x="450" y="396" fill="#6e6e78" font-size="12" text-anchor="middle">60 papers, both domains pooled &#183; paired design &#183; Caura vs no memory p = 1.4e-08</text>
+</svg>
