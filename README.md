@@ -14,6 +14,10 @@ beats mem0 where both were run. Numbers below, negative results included.
 > In raw result files and configs the Caura arm is still literally named
 > `memclaw`.
 
+<p align="center">
+  <img src="assets/scoreboard.svg" alt="Caura solves 40%, 44% and 21% more subtasks than no memory at gpt-4.1, gemini-3.6-flash and gpt-5.6-sol. At gemini-3.6-flash, of 440 subtasks Caura solved 166, mem0 131, no memory 115." width="100%">
+</p>
+
 ## Results
 
 All results below come from
